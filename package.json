@@ -1,0 +1,23 @@
+{
+  "name": "shiver",
+  "version": "0.0.1",
+  "description": "Shiver is a Node-based web content management system, utilizing EJS.",
+  "main": "shiver.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Blue-Shark-Friends/shiver.git"
+  },
+  "author": "called2voyage",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/Blue-Shark-Friends/shiver/issues"
+  },
+  "homepage": "https://github.com/Blue-Shark-Friends/shiver#readme",
+  "dependencies": {
+    "yargs": "^17.7.2"
+  }
+}
