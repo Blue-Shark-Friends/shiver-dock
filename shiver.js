@@ -21,12 +21,50 @@ yargs(hideBin(process.argv))
     installEJS(`${dir}/${site_name}`);
     createViewsDirectories();
     createPublicDirectories();
-    createMultiPageSite(true);
+    if (argv.single) {
+      createSinglePageSite(undefined,undefined,true);
+    }
+    else {
+      createMultiPageSite(true);
+    }
   })
   .option('verbose', {
     alias: 'v',
     type: 'boolean',
     description: 'Run with verbose logging'
+  })
+  .option('single', {
+    alias: 's',
+    type: 'boolean',
+    description: 'Generate single page site'
+  })
+  .command('add-about', 'add about page', (yargs) => {
+    return yargs;
+  }, (argv) => {
+    createAboutPage();
+    addPageToServer("about");
+    addPageToRender("about");
+  })
+  .command('add-manifesto', 'add manifesto page', (yargs) => {
+    return yargs;
+  }, (argv) => {
+    createManifestoPage();
+    addPageToServer("manifesto");
+    addPageToRender("manifesto");
+  })
+  .command('add-solutions', 'add solutions page', (yargs) => {
+    return yargs;
+  }, (argv) => {
+    createSolutionsPage();
+    addPageToServer("solutions");
+    addPageToRender("solutions");
+  })
+  .command('add-contact', 'add contact page', (yargs) => {
+    return yargs;
+  }, (argv) => {
+    createContactPage();
+    addPageToServer("contact");
+    addPageToRender("contact");
   })
   .command('launch', 'run shiver site', (yargs) => {
     return yargs;
@@ -148,7 +186,7 @@ function createSinglePageSite(additional_content = "", font_embed = false, heade
   var head = "";
   if (!font_embed){
     head = `<head>
-  <%- include('../partials/head', {title:index_data.title, description:index_data.description}) %>
+    <%- include('../partials/head', {title:index_data.title, description:index_data.description}) %>
 </head>`;
   } else {
     head = `<head>
@@ -159,44 +197,52 @@ function createSinglePageSite(additional_content = "", font_embed = false, heade
 </head>`;
   }
 
-  var header_img_section = `<img id="header-img" src="images/<%= branding_data.header_img %>" alt="Logo"/>`;
+  var header_img_section = `<div class="purpleblock">
+<img id="header-img" src="<%= branding_data.header_img %>" alt="Picture of [User]" />
+  <div class="pronouns">
+    <span>they/them</span>
+  </div>
+
+  <div class="shortbio">
+    [Short Bio]
+  </div>
+</div>`;
+  if (!header_img) header_img_section = "";
+
   var content = `<div class="content">
   <%- include('../partials/header', {title:index_data.title}) %>
-<div class="script-text">
-<p>
-  <%- branding_data.tagline %>
-</p>
-</div>
+
+  ${header_img_section}
+
+  <div class="bio">
+    [Long Bio]
+  </div>
+
+  <div class="greenblock textblock">
+    <p><em>They are changing the world.</em></p>
+  </div>
 
 ${additional_content}
 
 </div>`;
   var footer = `<%- include('../partials/footer') %>`;
 
-  var body = "";
-  if (!header_img){
-    body = `<body>
-${menu}
+  var poweredby = `<div class="poweredby">
+  <div class="cardlink">
+    <a href="https://bluesharkfriends.com/solutions"><span class="linkspan"></span></a>
+    <div class="fitcontent"><p><small class="bytext">powered by</small><br /><em>Shiver</em><br /><small class="subtext">A website creation framework</small></p></div>
+  </div>
+</div>`;
 
-${content}
-    
-${footer}
-    
-</body>`;
-  } else {
-    body = `<body>
-${header_img_section}
-
-${menu}
+  var body = `<body>
 
 ${content}
     
 ${footer}
 
-<div class="poweredby"><small>powered By shiver</small></div>
+${poweredby}
     
 </body>`;
-  }
 
   var html = `${head}
   
@@ -308,17 +354,87 @@ function createIndexData(description){
 
 function createStylesheet(){
   var css = `body {
-  background-color: #0C0C40;
+  background-color: #0D1D2A;
   font-family: "Trebuchet MS", sans-serif;
   color: white;
   min-height: 97vh;
   display: flex;
   flex-direction: column;
+  margin: 0;
+}
+
+.fitcontent {
+  width:fit-content;
+}
+
+.poweredby {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: right;
+}
+
+.poweredby .cardlink {
+  border: 2px solid #888888;
+  border-radius: 30px;
+  margin: 10px;
+  padding: 2px;
+  box-shadow: 2px 5px black;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  background-color: white;
+  color: black;
+}
+
+.poweredby p {
+  margin-top:10px;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.poweredby .cardlink p {
+  text-align: left;
+}
+
+.bytext {
+  font-size:x-small;
+  font-weight:bold;
+}
+
+.poweredby em {
+  font-family: 'Trebuchet MS', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+}
+
+.subtext {
+  font-size:xx-small;
 }
 
 em {
   font-weight: bold;
   font-style: normal;
+}
+
+.preview_container {
+  margin-top: 40px;
+  text-align: left;
+}
+
+.preview em {
+  font-weight: normal;
+  font-style: italic;
+}
+
+.preview p {
+  text-align: left !important;
+}
+
+h1 {
+  margin-top: 21px;
 }
 
 h2 {
@@ -341,13 +457,15 @@ a:hover {
 
 footer {
   margin-top: auto;
-  text-align: right;
+  text-align: center;
 }
 
 #header-img {
   display: block;
   margin-left: auto;
   margin-right: auto;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .border {
@@ -359,14 +477,27 @@ footer {
 }
 
 .content {
-  margin:0 auto;
+  /*margin:0 auto;*/
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.content h2 {
+  text-align: left;
 }
 
 .content p {
-  text-align: center;
-  text-shadow: 2px 2px black;
+  text-align: left;
   margin: 0;
+}
+
+.textblock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
 }
 
 .content > ul {
@@ -384,6 +515,66 @@ footer {
   font-style: italic;
 }
 
+.shortbio {
+  margin-top: 20px;
+}
+
+.bio {
+  margin: auto;
+  margin-top: 20px;
+  padding: 10px;
+  font-family: "Trebuchet MS", sans-serif;
+  text-align: left;
+}
+
+.cardlink {
+  position: relative;
+  width: 200px;
+  border: 2px solid #888888;
+  border-radius: 30px;
+  margin: 10px;
+  padding: 30px;
+  box-shadow: 5px 10px #dddddd;
+}
+
+.cardlink p {
+  margin-top:10px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.cardlink:hover {
+  cursor: pointer;
+}
+
+.cardlink:hover p {
+  text-decoration: underline;
+}
+
+.linkspan {
+  position:absolute; 
+  width:100%;
+  height:100%;
+  top:0;
+  left: 0;
+  z-index: 1;
+}
+
+.imglinkbox {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: center;
+}
+
+.imglinkbox img {
+  max-width: 200px;
+}
+
+.imglinkbox a {
+  margin-bottom: 30px;
+}
+
 li {
   padding-bottom: 5px;
 }
@@ -399,19 +590,21 @@ p.inline {
 .menu-icon {
   font-size: 2em;
   margin-left: 12px;
+  width: fit-content;
+  position: fixed;
 }
 
 .menu-icon a {
-  color: white;
+  color: black;
   font-weight: normal;
 }
 
 .menu-icon a:visited {
-  color: white;
+  color: black;
 }
 
 .menu-icon a:hover {
-  color: white;
+  color: black;
 }
 
 .menu {
@@ -425,7 +618,13 @@ p.inline {
 }
 
 .script-text {
-  font-family: "Dancing Script", cursive;
+  font-family: "Trebuchet MS", sans-serif;
+  margin-top: 20px;
+  margin-left: 30%;
+}
+
+.script-text p {
+  text-align: left;
 }
 
 .border:hover a {
@@ -440,6 +639,12 @@ p.inline {
 .pronouns {
   margin-top: -1em;
   font-size: small;
+  margin-left: 20%;
+}
+
+.pronouns span {
+  display: inline-block;
+  width: fit-content;
 }
 
 .manifesto div {
@@ -464,23 +669,40 @@ p.inline {
   font-size: small;
 }
 
-.poweredby {
-  text-align: left;
-  position: fixed;
-  bottom: 0;
-  margin-left: -8px;
-  font-size: x-small;
-  padding-left: 5px;
-  padding-bottom: 5px;
+.purpleblock {
+  background-color: #462E5B;
+  padding: 20px;
+  margin-bottom: 10px;
+  color: white;
+}
+
+.greenblock {
+  background-color: #4E5E5A;
+  padding: 20px;
+  margin-bottom: 10px;
+  color: white;
+}
+
+.socialbox {
+  display: flex;
+  margin: auto;
+  align-items: center;
+  gap: 20px;
 }
 
 @media screen and (min-width: 800px) {
   #header-img {
-    width: 25%;
-    height: 25%;
+    width: 38vh;
+    height: 38vh;
   }
 
   .content {
+    width: 100%;
+  }
+  .content p {
+    width: 50%;
+  }
+  .bio {
     width: 50%;
   }
 }
@@ -489,11 +711,22 @@ p.inline {
   and (min-width: 320px)
   and (max-width: 800px) {
   #header-img {
-    width: 50%;
-    height: 50%;
+    width: 42vw;
+    height: 42vw;
   }
-
   .content {
+    width: 100%;
+  }
+  .content p {
+    width: 80%;
+  }
+  .script-text {
+    margin-left: 10%;
+  }
+  .pronouns {
+    margin-left: 50%;
+  }
+  .bio {
     width: 90%;
   }
 }`;
@@ -548,6 +781,8 @@ app.get('/', function(req, res) {
   res.render('pages/index', {index_data: index_data, branding_data: branding_data});
 });
 
+// end of pages
+
 app.listen(8080);
 console.log('Server is listening on port 8080');`;
   createPage("server.js", js, true);
@@ -583,6 +818,8 @@ app.render('pages/index', {index_data: index_data, branding_data: branding_data}
           });
     }
 });
+
+// end of pages
 
 console.log('Static files generated.');`;
   createPage("render.js", js, true);
@@ -622,4 +859,337 @@ function generateStaticFiles(dir){
       return;
     }
   });
+}
+
+function createAboutPage(){
+  html = `<head>
+  <%- include('../partials/head', {title:about_data.title, description:about_data.description}) %>
+</head>
+<body>
+  <%- include('../partials/menu', {title:about_data.title}) %>
+
+<div class="content" style="display: flex; flex-direction: column;">
+  <%- include('../partials/header', {title:about_data.title, subheading: 'About'}) %>
+<div>
+  <% about_data.about_site.split("\\n").forEach(element => { %>
+    <%= element %>
+    <br />
+  <% }); %>
+</div>
+
+<% about_data.people.forEach(member => { %>
+  <div>
+    <h3><%= member.name %></h3>
+    <h4 class="pronouns"><%= member.pronouns %></h4>
+    <img class="about-img" src="<%= member.img_src %>" width="200px" height="<% if(member.name === "Hannah Parker"){ %>267px<% } else{ %>201px<% } %>" alt="<%= member.img_alt %>"/>
+    <div style="text-align: left;">
+      <% if(member.name === "Hannah Parker"){ %>
+        <%= member.bio %>
+        <br /><br />
+        <a href="<%= member.link_ref %>"><%= member.link_text %></a>
+      <% } else { %>
+        <% member.bio.split("\\n").forEach(element => { %>
+          <%= element %>
+          <br />
+        <% }); %>
+      <% } %>
+    </div>
+  </div>
+<% }); %>
+<br /><br />
+</div>
+
+<%- include('../partials/footer') %>
+
+</body>`;
+  createPage("views/pages/about.ejs", html);
+
+  const regex = new RegExp('[\\\\]');
+
+  var description = questionRegex(`What is the description for your about page?`, regex, `No backslashes.`);
+  var about_site = questionRegex(`What is the about text for your site?`, regex, `No backslashes.`);
+
+  var people = [];
+
+  people = addPersonToAbout(people);
+
+  createAboutData(description, about_site, people.toString());
+}
+
+function createAboutData(description, about_site, people){
+  json = `{
+    "title": "About",
+    "description": "${description}",
+    "about_site": "${about_site}",
+    "people":
+    [${people}]
+}`;
+  createPage("views/data/about.json", json, true);
+}
+
+function addPersonToAbout(people){
+  const regex = new RegExp('[\\\\]');
+
+  console.log("Generating individual data...");
+
+  var name = questionRegex(`What is their name?`, regex, `No backslashes.`);
+  var pronouns = questionRegex(`What are their pronouns?`, regex, `No backslashes.`);
+  var bio = questionRegex(`What is their bio?`, regex, `No backslashes.`);
+  var link_text = questionRegex(`What is their link text?`, regex, `No backslashes.`);
+  var link_ref = questionRegex(`What is the URL for their link?`, regex, `No backslashes.`);
+  var img_src = questionRegex(`What is the relative path to their image?`, regex, `No backslashes.`);
+  var img_alt = questionRegex(`What is the alt text for their image?`, regex, `No backslashes.`);
+
+  var profile = `{
+    "name": "${name}",
+    "pronouns": "${pronouns}",
+    "bio": "${bio}",
+    "link_text": "${link_text}",
+    "link_ref": "${link_ref}",
+    "img_src": "${img_src}",
+    "img_alt": "${img_alt}"
+}`;
+  people.push(profile);
+
+  var addPerson = prompt("Would you like to add another person? [no] ", "no");
+
+  if (addPerson.toLowerCase() === "yes" || addPerson.toLowerCase() === "y"){
+    addPersonToAbout(people);
+  }
+  return people;
+}
+
+function addPageToServer(name){
+  var server = fs.readFileSync('server.js', 'utf-8');
+
+  var updatedServer = server.replace("// end of pages", `// ${name} page
+let ${name}_data = require('./views/data/${name}.json')
+app.get('/${name}', function(req, res) {
+  res.render('pages/${name}', {${name}_data: ${name}_data, branding_data: branding_data});
+});
+
+// end of pages`);
+
+  fs.writeFileSync('server.js', updatedServer, 'utf-8');
+}
+
+function addPageToRender(name){
+  var render = fs.readFileSync('render.js', 'utf-8');
+
+  var updatedRender = render.replace("// end of pages", `// ${name} page
+let ${name}_data = require('./views/data/${name}.json')
+app.render('pages/${name}', {${name}_data: ${name}_data, branding_data: branding_data}, (err, res) =>{
+    if (err) {
+        console.error('Error rendering');
+    } else {
+        console.log(__dirname + '/${name}.html')
+        fs.writeFile(__dirname + '/${name}.html', res, err => {
+            if (err) {
+              console.error(err);
+            } else {
+              // file written successfully
+            }
+          });
+    }
+});
+
+// end of pages`);
+
+  fs.writeFileSync('render.js', updatedRender, 'utf-8');
+}
+
+function createManifestoPage(){
+  html = `<head>
+  <%- include('../partials/head', {title:manifesto_data.title, description:manifesto_data.description}) %>
+</head>
+<body>
+  <%- include('../partials/menu', {title:manifesto_data.title}) %>
+
+<div class="content manifesto">
+  <%- include('../partials/header', {title:manifesto_data.title, subheading: 'Member Manifesto'}) %>
+  <div>
+    <h3>
+      1. Do not scale.
+    </h3>
+    <p>
+      Our goal is to take care of our family and our community.  It is not our goal to build something that works for everyone.  We do not believe in building beyond the confines of mutual trust.
+    </p>
+  </div>
+  <div>
+    <h3>
+      2. No one works for free.
+    </h3>
+    <p>
+      All transactions are mutually beneficial exchanges either money, resources, or labor.  We are transparent about what we can offer and what we can accept.
+    </p>
+  </div>
+  <div>
+    <h3>
+      3. Partner or consume; never employ.
+    </h3>
+    <p>
+      We participate in this capitalistic system as a consumer by necessity.  But we will not enter into any hierarchical arrangements.  We believe in the equality of the worker.
+    </p>
+  </div>
+  <div>
+    <h3>
+      4. No customers, just friends.
+    </h3>
+    <p>
+      Business is a necessity for community.  But the alienation of the worker and the consumer is dehumanizing.  We seek to build personal relationships with all of our partners.  We are building a community.
+    </p>
+  </div>
+  <div>
+    <h3>
+      5. Build coalitions not congregations.
+    </h3>
+    <p>
+      Whenever possible we will empower people to carry endeavours in support of their own communities.  We do not acquire.  We arm.
+    </p>
+  </div>
+  <div>
+    <h3>
+      6. No puritanical nonsense.
+    </h3>
+    <p>
+      We play with legos.  We use plastic forks.  We will not apologize for trying to enjoy our lives.
+    </p>
+  </div>
+  <div>
+    <h3>
+      7. Pay needs not salaries.
+    </h3>
+    <p>
+      We take care of our members and their families.  Our thriving is our responsibility.  We share joy.
+    </p>
+  </div>
+  <div>
+    <h3>
+      8. Practice liberation.
+    </h3>
+    <p>
+      In an agrarian economy, collectivize the land.<br />
+      In an industrial economy, collectivize the means of production.<br />
+      In an information economy, collectivize the data.
+    </p>
+  </div>
+  <div>
+    <h3>
+      9. Be publicly accountable.
+    </h3>
+    <p>
+      We are not striving for perfection, we are striving for transparency and accountability to our community.  We will learn, grow, and evolve.
+    </p>
+  </div>
+  <div>
+    <h3>
+      10. Strive to be moneyless.
+    </h3>
+    <p>
+      Whenever possible, we will look to trade in mutual aid first when partnering with people in our community.  We want to direct our resources and our labor in service of our people, using the tool most mutually beneficial in context. Sometimes that will be money, but money relinquishes power to the currency owner. <b>We want to keep our power in our community as much as we can.</b>
+    </p>
+  </div>
+  <div class="license">
+    <hr />
+    The Blue Shark Friends Member Manifesto is licensed under <a href="files/cnpl.pdf">CNPL7+</a> (<a href="https://thufie.lain.haus/NPL.html">summary</a>). Feel free to borrow and/or adapt for your own community!
+  </div>
+  <br />
+</div>
+
+  <%- include('../partials/footer') %>
+  
+</body>`;
+  createPage("views/pages/manifesto.ejs", html);
+
+  const regex = new RegExp('[\\\\]');
+
+  var title = questionRegex(`What is the title for your manifesto page?`, regex, `No backslashes.`);
+  var description = questionRegex(`What is the description for your manifesto page?`, regex, `No backslashes.`);
+
+  createManifestoData(title, description);
+}
+
+function createManifestoData(title, description){
+  json = `{
+    "title": "${title}",
+    "description": "${description}"
+}`;
+  createPage("views/data/manifesto.json", json, true);
+}
+
+function createSolutionsPage(){
+  html = `<head>
+  <%- include('../partials/head', {title:solutions_data.title, description:solutions_data.description}) %>
+</head>
+<body>
+  <%- include('../partials/menu', {title:solutions_data.title}) %>
+
+<div class="content">
+  <%- include('../partials/header', {title:solutions_data.title, subheading: 'Software'}) %>
+<ul>
+  <li>Shiver</li>
+    <ul>
+      <li><small>Website content management system</small></li>
+      <li><small><i>Not yet released</i></small></li>
+    </ul>
+</ul>
+
+</div>
+
+<%- include('../partials/footer') %>
+
+</body>`;
+  createPage("views/pages/solutions.ejs", html);
+
+  const regex = new RegExp('[\\\\]');
+
+  var description = questionRegex(`What is the description for your solutions page?`, regex, `No backslashes.`);
+
+  createSolutionsData(description);
+}
+
+function createSolutionsData(description){
+  json = `{
+    "title": "Solutions",
+    "description": "${description}"
+}`;
+  createPage("views/data/solutions.json", json, true);
+}
+
+function createContactPage(){
+  html = `<head>
+  <%- include('../partials/head', {title:contact_data.title, description:contact_data.description}) %>
+</head>
+<body>
+  <%- include('../partials/menu', {title:contact_data.title}) %>
+
+<div class="content">
+  <%- include('../partials/header', {title:contact_data.title, subheading: 'Social Links'}) %>
+<ul>
+  <li><a href="<%= branding_data.facebook %>">Facebook</a></li>
+  <li><a href="<%= branding_data.linkedin %>">LinkedIn</a></li>
+  <li><a href="<%= branding_data.github %>">GitHub</a></li>
+  <li><a href="<%= branding_data.instagram %>">Instagram</a></li>
+</ul>
+
+</div>
+
+<%- include('../partials/footer') %>
+
+</body>`;
+  createPage("views/pages/contact.ejs", html);
+
+  const regex = new RegExp('[\\\\]');
+
+  var description = questionRegex(`What is the description for your contact page?`, regex, `No backslashes.`);
+
+  createContactData(description);
+}
+
+function createContactData(description){
+  json = `{
+    "title": "Contact",
+    "description": "${description}"
+}`;
+  createPage("views/data/contact.json", json, true);
 }
