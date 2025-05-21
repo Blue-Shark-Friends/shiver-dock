@@ -2,8 +2,11 @@
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
 const fs = require('node:fs');
+const path = require('node:path');
 const prompt = require("prompt-sync")({ sigint: true });
 const { exec } = require('child_process');
+
+const app_dir = __dirname
 
 yargs(hideBin(process.argv))
   .command('init', 'generate shiver site', (yargs) => {
@@ -170,11 +173,21 @@ function createPublicDirectories(){
   } catch (error) {
     console.error(`Directory already exists.`);
   }
+  // Copy favicon to images folder of site
+  var watcher = fs.watch(process.cwd(), (eventType, filename) => { 
+    if (eventType === 'rename' && filename === "images") {
+      fs.cp(path.resolve(app_dir, "favicon.png"), path.resolve("images/favicon.png"), (err) => {
+        watcher.close();
+      });
+    }
+  });
+
   try {
     fs.mkdirSync(`images`);
   } catch (error) {
     console.error(`Directory already exists.`);
   }
+
   try {
     fs.mkdirSync(`js`);
   } catch (error) {
@@ -319,6 +332,7 @@ function createMenuPartial(){
 function createHeadPartial(){
   var html = `<title><%= branding_data.full_site_name %> - <%= typeof title != 'undefined' ? title : 'Untitled' %></title>
 <!--<link rel="shortcut icon" type="image/x-icon" href="images/<%= branding_data.icon_img %>" />-->
+<link rel="shortcut icon" type="image/x-icon" href="images/favicon.png" />
 <meta name="description" content="<%= typeof description != 'undefined' ? description : branding_data.full_site_name %>">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="stylesheet" href="css/style.css">
