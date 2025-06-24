@@ -12,12 +12,12 @@ yargs(hideBin(process.argv))
   .command('init', 'generate shiver site', (yargs) => {
     return yargs;
   }, (argv) => {
-    var dir = process.cwd(); // Get user's current directory
+    var dir = getSiteDirectory();
     var site_name = "Untitled";
     site_name = getSiteName();
     // console.log(`Site name is ${site_name}.`);
     if (argv.verbose) console.info(`Generating ...`);
-    createSiteDirectory(dir, site_name);
+    createSiteDirectory(dir, site_name, argv.verbose);
     runNpmInit(`${dir}/${site_name}`);
     process.chdir(`${dir}/${site_name}`);
     installExpress(`${dir}/${site_name}`);
@@ -114,16 +114,33 @@ function questionRegex(query, regex, error_msg){
   }
 }
 
+function getSiteDirectory(){
+  var site_dir, default_dir;
+  site_dir = default_dir = process.cwd(); // Get user's current directory
+  try {
+    site_dir = prompt(`Enter site directory [${site_dir}]: `);
+    if (site_dir == '') site_dir = default_dir;
+    if (!fs.existsSync(site_dir)){
+      throw `Directory not found.`;
+    }
+    return site_dir;
+  } catch (error) {
+    console.error(`Directory not found.`);
+    return getSiteDirectory();
+  }
+}
+
 function getSiteName(){
   var site_name;
   const regex = new RegExp('[^a-zA-Z0-9_\\-\\ ]');
-  site_name = questionRegex(`What is the name of your site?`, regex, `Entries must contain only alphanumeric characters, hyphens, and underscores.`);
+  site_name = questionRegex(`Enter site name []:`, regex, `Entries must contain only alphanumeric characters, hyphens, and underscores.`);
   site_name = site_name.replace(/ /g, "_").toLowerCase();
   return site_name;
 }
 
-function createSiteDirectory(user_dir, site_name){
+function createSiteDirectory(user_dir, site_name, verbose = false){
   try {
+    if (verbose) console.log(`Creating "%s" ...`, path.resolve(`${user_dir}/${site_name}`));
     fs.mkdirSync(`${user_dir}/${site_name}`);
   } catch (error) {
     console.error(`Directory ${site_name} already exists.`);
@@ -213,11 +230,11 @@ function createSinglePageSite(additional_content = "", font_embed = false, heade
   var header_img_section = `<div class="purpleblock">
 <img id="header-img" src="<%= branding_data.header_img %>" alt="Picture of [User]" />
   <div class="pronouns">
-    <span>they/them</span>
+    <span><%= index_data.pronouns %></span>
   </div>
 
   <div class="shortbio">
-    [Short Bio]
+    <%= index_data.short_bio %>
   </div>
 </div>`;
   if (!header_img) header_img_section = "";
@@ -228,7 +245,7 @@ function createSinglePageSite(additional_content = "", font_embed = false, heade
   ${header_img_section}
 
   <div class="bio">
-    [Long Bio]
+    <%= index_data.long_bio %>
   </div>
 
   <div class="greenblock textblock">
@@ -268,8 +285,8 @@ ${body}`;
   const regex = new RegExp('[\\\\]');
 
   var full_site_name = questionRegex(`What is the full name of your site for the header?`, regex, `No backslashes.`);
-  var tagline = questionRegex(`What is your site tagline?`, regex, `No backslashes.`);
-  var tagline_font_embed = questionRegex(`What is the URL for the tagline's font embed?`, regex, `No backslashes.`);
+  var tagline = ''; // questionRegex(`What is your site tagline?`, regex, `No backslashes.`);
+  var tagline_font_embed = ''; // questionRegex(`What is the URL for the tagline's font embed?`, regex, `No backslashes.`);
   var icon_img = questionRegex(`What is the filename of your icon image?`, regex, `No backslashes.`);
   var header_img_filename = questionRegex(`What is the filename of your header image?`, regex, `No backslashes.`);
   var email = questionRegex(`What is the primary contact email for your site?`, regex, `No backslashes.`);
@@ -277,14 +294,17 @@ ${body}`;
   var copyright_holder = questionRegex(`Who is the copyright holder for your site content?`, regex, `No backslashes.`);
   var facebook = questionRegex(`What is your Facebook URL?`, regex, `No backslashes.`);
   var linkedin = questionRegex(`What is your LinkedIn URL?`, regex, `No backslashes.`);
-  var github = questionRegex(`What is your GitHub URL?`, regex, `No backslashes.`);
+  var github = ''; // questionRegex(`What is your GitHub URL?`, regex, `No backslashes.`);
   var instagram = questionRegex(`What is your Instagram URL?`, regex, `No backslashes.`);
 
   createBrandingData(full_site_name, tagline, tagline_font_embed, icon_img, header_img_filename, email, copyright_year, copyright_holder, facebook, linkedin, github, instagram);
   
   var index_description = questionRegex(`What is the description for your index page?`, regex, `No backslashes.`);
+  var pronouns = questionRegex(`What are your pronouns?`, regex, `No backslashes.`);
+  var short_bio = questionRegex(`What is your short bio?`, regex, `No backslashes.`);
+  var long_bio = questionRegex(`What is your long bio?`, regex, `No backslashes.`);
 
-  createIndexData(index_description);
+  createIndexData(index_description, pronouns, short_bio, long_bio);
 
   createStylesheet();
 
@@ -358,10 +378,13 @@ function createBrandingData(full_site_name, tagline, tagline_font_embed, icon_im
   createPage("views/data/_branding.json", json, true);
 }
 
-function createIndexData(description){
+function createIndexData(description, pronouns, short_bio, long_bio){
   var json = `{
   "title": "Home",
-  "description": "${description}"
+  "description": "${description}",
+  "pronouns": "${pronouns}",
+  "short_bio": "${short_bio}",
+  "long_bio": "${long_bio}"
 }`;
   createPage("views/data/index.json", json, true);
 }
