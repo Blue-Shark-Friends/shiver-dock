@@ -14,9 +14,9 @@
   "author": "called2voyage",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/Blue-Shark-Friends/shiver/issues"
+    "url": "https://github.com/Blue-Shark-Friends/shiver-dock/issues"
   },
-  "homepage": "https://github.com/Blue-Shark-Friends/shiver#readme",
+  "homepage": "https://github.com/Blue-Shark-Friends/shiver-dock#readme",
   "dependencies": {
     "ejs": "^3.1.10",
     "express": "^5.1.0",
