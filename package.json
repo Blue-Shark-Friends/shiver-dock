@@ -1,6 +1,6 @@
 {
   "name": "shiver",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Shiver is a Node-based web content management system, utilizing EJS.",
   "main": "shiver.js",
   "scripts": {
