@@ -274,20 +274,11 @@ ${additional_content}
 </div>`;
   var footer = `<%- include('../partials/footer') %>`;
 
-  var poweredby = `<div class="poweredby">
-  <div class="cardlink">
-    <a href="https://bluesharkfriends.com/solutions"><span class="linkspan"></span></a>
-    <div class="fitcontent"><p><small class="bytext">powered by</small><br /><em>Shiver</em><br /><small class="subtext">A website creation framework</small></p></div>
-  </div>
-</div>`;
-
   var body = `<body>
 
 ${content}
     
 ${footer}
-
-${poweredby}
     
 </body>`;
 
@@ -419,6 +410,13 @@ function createStylesheet(){
 
 .fitcontent {
   width:fit-content;
+  position: relative;
+}
+
+.fitcontent img {
+  position: absolute;
+  top: 15px;
+  right: 12px;
 }
 
 .poweredby {
@@ -811,9 +809,21 @@ function createHeaderPartial(){
 }
 
 function createFooterPartial(){
+  var poweredby = `<div class="poweredby">
+  <div class="cardlink">
+    <a href="https://shiver.bluesharkfriends.com"><span class="linkspan"></span></a>
+    <div class="fitcontent">
+        <p><small class="bytext">powered by</small><br /><em>Shiver</em><br /><small class="subtext">A community web framework</small></p>
+        <img src="images/favicon.png" width="35px" />
+    </div>
+  </div>
+</div>`;
+
   var html = `<footer>
 <small>Copyright &copy; <%= branding_data.copyright_year %>, <%= branding_data.copyright_holder %>. All rights reserved.</small>
-</footer>`;
+</footer>
+
+${poweredby}`;
   createPage("views/partials/footer.ejs", html, true);
 }
 
